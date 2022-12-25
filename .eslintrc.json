@@ -1,0 +1,93 @@
+{
+	"root": true,
+	"env": {
+		"browser": true,
+		"worker": true,
+		"es2020": true
+	},
+	"globals": {
+		"config": "readonly"
+	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended"
+	],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": "latest",
+		"sourceType": "module",
+		"impliedStrict": true
+	},
+	"plugins": [
+		"@typescript-eslint"
+	],
+	"rules": {
+		"indent": [
+			"error",
+			"tab"
+		],
+		"linebreak-style": "off",
+		"quotes": [
+			"error",
+			"double"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"semi-spacing": [
+			"warn",
+			{
+				"before": false,
+				"after": true
+			}
+		],
+		"semi-style": [
+			"warn",
+			"last"
+		],
+		"no-cond-assign": [
+			"error",
+			"except-parens"
+		],
+		"no-dupe-else-if": [
+			"error"
+		],
+		"no-multiple-empty-lines": [
+			"warn",
+			{
+				"max": 1,
+				"maxEOF": 1,
+				"maxBOF": 0
+			}
+		],
+		"new-parens": [
+			"error",
+			"always"
+		],
+		"max-len": "off",
+		"eol-last": [
+			"warn",
+			"always"
+		],
+		"brace-style": [
+			"warn",
+			"1tbs"
+		],
+		"dot-location": [
+			"warn",
+			"property"
+		],
+		"no-undef": "warn",
+		"no-empty": "warn",
+		"no-prototype-builtins": "warn",
+		"no-unreachable": "warn",
+		"valid-typeof": "warn",
+		"vars-on-top": "warn",
+		"@typescript-eslint/no-inferrable-types": "off",
+		"@typescript-eslint/no-namespace": "off",
+		"@typescript-eslint/no-explicit-any": "off",
+		"@typescript-eslint/no-empty-function": "warn",
+		"no-debugger": "warn"
+	}
+}

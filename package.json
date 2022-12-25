@@ -1,0 +1,22 @@
+{
+  "name": "js-vmaf",
+  "version": "0.0.0",
+  "description": "A simple tool to quickly and correctly compare a reference file with a distorted file using VMAF.",
+  "main": "generated/index.js",
+  "scripts": {
+    "lint": "npx eslint ./source --ext .ts,.mts",
+    "fix": "npx eslint ./source --ext .ts,.mts --fix",
+    "compile": "npx tsc",
+    "build": "npm run fix && npm run compile",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Fabian 'Xaymar' Dirks <info@xaymar.com>",
+  "license": "BSD 3-Clause \"New\" or \"Revised\" License",
+  "devDependencies": {
+    "@types/node": "^18.11.17",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "eslint": "^8.30.0",
+    "typescript": "^4.9.4"
+  }
+}

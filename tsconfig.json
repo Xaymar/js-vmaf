@@ -1,0 +1,25 @@
+{
+  "include": [
+    "./source/**/*"
+  ],
+  "compilerOptions": {
+    "declaration": true,
+    "declarationDir": "generated",
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "incremental": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "generated",
+    "removeComments": true,
+    "rootDir": "source",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "ES2020",
+    "tsBuildInfoFile": "./generated/.tsbuildinfo",
+    "useDefineForClassFields": true,
+  }
+}
