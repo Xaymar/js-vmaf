@@ -1,0 +1,5 @@
+/generated
+/node_modules
+*.js
+*.map
+*.tsbuildinfo
