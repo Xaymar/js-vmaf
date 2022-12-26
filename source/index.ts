@@ -428,7 +428,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 		this.license();
 		this._args = this._argparse.parse_args();
 
-		if (!this._args.quiet) console.dir(this._args);
+		//if (!this._args.quiet) console.dir(this._args);
 
 		// Probe information (color, fps, ...) about the reference file.
 		try {
