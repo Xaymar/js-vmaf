@@ -1,0 +1,42 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "install",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: install",
+			"detail": "Install dependencies via NPM"
+		},
+		{
+			"type": "npm",
+			"script": "clean-install",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: clean-install",
+			"detail": "Install dependencies via NPM cleanly"
+		},
+		{
+			"type": "npm",
+			"script": "fix",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "eslint: fix",
+			"detail": "Let ESLint fix things."
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"problemMatcher": [
+				"$eslint-stylish",
+				"$tsc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "tsc: build"
+		}
+	]
+}
