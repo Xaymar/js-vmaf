@@ -298,7 +298,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 
 			// Convert format.
 			if (this._args.format || (this._ref.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
-				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`)
+				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
 			}
 
 			filters.push(`[0:v:0]${chain.join(",")}[ref]`);
@@ -355,7 +355,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 
 			// Convert format.
 			if (this._args.format || (cmp.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
-				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`)
+				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
 			}
 
 			filters.push(`[1:v:0]${chain.join(",")}[dst]`);
