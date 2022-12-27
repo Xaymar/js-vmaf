@@ -1,6 +1,6 @@
 {
   "name": "js-vmaf",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A simple tool to quickly and correctly compare a reference file with a distorted file using VMAF.",
   "main": "generated/index.js",
   "scripts": {

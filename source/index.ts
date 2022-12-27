@@ -257,6 +257,26 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_framerate)}`);
 			}
 
+			// Convert color.
+			if (this._args.color_space
+				|| this._args.color_primaries
+				|| this._args.color_trc
+				|| this._args.color_range
+				|| (this._ref.video[0].color_space !== fref.video[0].color_space)
+				|| (this._ref.video[0].color_primaries !== fref.video[0].color_primaries)
+				|| (this._ref.video[0].color_transfer !== fref.video[0].color_transfer)
+				|| (this._ref.video[0].color_range !== fref.video[0].color_range)) {
+				chain.push("colorspace=dither=fsb" +
+					`:ispace=${valueOrDefault(this._ref.video[0].color_space, "bt709")}` +
+					`:iprimaries=${valueOrDefault(this._ref.video[0].color_primaries, "bt709")}` +
+					`:itrc=${valueOrDefault(this._ref.video[0].color_transfer, "bt709")}` +
+					`:irange=${valueOrDefault(this._ref.video[0].color_range, "tv")}` +
+					`:space=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "bt709"))}` +
+					`:primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "bt709"))}` +
+					`:trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "bt709"))}` +
+					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}`);
+			}
+
 			// Scale
 			if (this._args.width
 				|| this._args.height) {
@@ -276,26 +296,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				);
 			}
 
-			// Convert format and color.
-			if (this._args.color_space
-				|| this._args.color_primaries
-				|| this._args.color_trc
-				|| this._args.color_range
-				|| (this._ref.video[0].pix_fmt !== fref.video[0].pix_fmt)
-				|| (this._ref.video[0].color_space !== fref.video[0].color_space)
-				|| (this._ref.video[0].color_primaries !== fref.video[0].color_primaries)
-				|| (this._ref.video[0].color_transfer !== fref.video[0].color_transfer)
-				|| (this._ref.video[0].color_range !== fref.video[0].color_range)) {
-				chain.push("colorspace=dither=fsb" +
-					`:ispace=${valueOrDefault(this._ref.video[0].color_space, "bt709")}` +
-					`:iprimaries=${valueOrDefault(this._ref.video[0].color_primaries, "bt709")}` +
-					`:itrc=${valueOrDefault(this._ref.video[0].color_transfer, "bt709")}` +
-					`:irange=${valueOrDefault(this._ref.video[0].color_range, "tv")}` +
-					`:space=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "bt709"))}` +
-					`:primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "bt709"))}` +
-					`:trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "bt709"))}` +
-					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}` +
-					`:format=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
+			// Convert format.
+			if (this._args.format || (this._ref.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
+				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`)
 			}
 
 			filters.push(`[0:v:0]${chain.join(",")}[ref]`);
@@ -316,7 +319,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				|| this._args.color_primaries
 				|| this._args.color_trc
 				|| this._args.color_range
-				|| (cmp.video[0].pix_fmt !== fref.video[0].pix_fmt)
 				|| (cmp.video[0].color_space !== fref.video[0].color_space)
 				|| (cmp.video[0].color_primaries !== fref.video[0].color_primaries)
 				|| (cmp.video[0].color_transfer !== fref.video[0].color_transfer)
@@ -329,8 +331,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 					`:space=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "bt709"))}` +
 					`:primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "bt709"))}` +
 					`:trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "bt709"))}` +
-					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}` +
-					`:format=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
+					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}`);
 			}
 
 			// Scale
@@ -352,6 +353,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				);
 			}
 
+			// Convert format.
+			if (this._args.format || (cmp.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
+				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`)
+			}
+
 			filters.push(`[1:v:0]${chain.join(",")}[dst]`);
 		}
 
@@ -368,7 +374,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				chain.push(`feature=${this._args.feature.join("|").replace(/([\\"'`:]{1,1})/g, "\\\\$1")}`);
 			}
 			chain.push(`n_threads=${this._args.threads}`);
-			filters.push(`[ref][dst]libvmaf=${chain.join(":")}`);
+			filters.push(`[dst][ref]libvmaf=${chain.join(":")}`);
 
 			const proc = this.FFmpeg([
 				"-hide_banner",
@@ -460,9 +466,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 	}
 
 	public async run() : Promise<number> {
-		this._args = this._argparse.parse_known_args();
-		this.license();
 		this._args = this._argparse.parse_args();
+		this.license();
 
 		//if (!this._args.quiet) console.dir(this._args);
 
