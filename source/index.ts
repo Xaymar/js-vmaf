@@ -8,6 +8,7 @@ import CHILD_PROCESS from "node:child_process";
 import PROCESS from "node:process";
 import PATH from "node:path";
 import FS from "node:fs";
+import PERCENTILE from "percentile";
 
 function valueOrDefault(value : any, fallback : any) : any {
 	if (value === undefined) {
@@ -119,7 +120,7 @@ class App {
 		this._argparse.add_argument("-m", "--model", {
 			type: "str",
 			action: "append",
-			default: [ "version=vmaf_v0.6.1" ],
+			default: [],
 			help: "Enable (and configure) a model"
 		});
 
@@ -224,9 +225,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 	}
 
 	async compare(path : string) {
-		if (!this._args.quiet) console.log(`'${path}' Comparing...`);
+		if (!this._args.quiet) console.log(`Comparing '${path}'...`);
 
-		const cmp = this.FFprobe([path]);
+		let cmp;
+		try {
+			cmp = this.FFprobe([path]);
+		} catch {
+			console.error("Not a video file.");
+			return;
+		}
 		if (cmp.video.length == 0) {
 			console.error(`'${path}' Missing video track.`);
 			return;
@@ -250,6 +257,25 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_framerate)}`);
 			}
 
+			// Scale
+			if (this._args.width
+				|| this._args.height) {
+				chain.push(
+					`scale=w=${valueOrDefault(this._args.width, -1)}`+
+					`:h=${valueOrDefault(this._args.height, -1)}`+
+					":flags=bicubic+full_chroma_inp+full_chroma_int"+
+					":force_original_aspect_ratio=0"
+				);
+			} else if ((this._ref.video[0].width !== fref.video[0].width)
+				|| (this._ref.video[0].height !== fref.video[0].height)) {
+				chain.push(
+					`scale=w=${valueOrDefault(fref.video[0].width, this._ref.video[0].width)}`+
+					`:h=${valueOrDefault(fref.video[0].height, this._ref.video[0].height)}`+
+					":flags=bicubic+full_chroma_inp+full_chroma_int"+
+					":force_original_aspect_ratio=0"
+				);
+			}
+
 			// Convert format and color.
 			if (this._args.color_space
 				|| this._args.color_primaries
@@ -270,25 +296,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 					`:trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "bt709"))}` +
 					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}` +
 					`:format=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
-			}
-
-			// Scale
-			if (this._args.width
-				|| this._args.height) {
-				chain.push(
-					`scale=w=${valueOrDefault(this._args.width, -1)}`+
-					`:h=${valueOrDefault(this._args.height, -1)}`+
-					":flags=bicubic+full_chroma_inp+full_chroma_int"+
-					":force_original_aspect_ratio=0"
-				);
-			} else if ((this._ref.video[0].width !== fref.video[0].width)
-				|| (this._ref.video[0].height !== fref.video[0].height)) {
-				chain.push(
-					`scale=w=${valueOrDefault(fref.video[0].width, this._ref.video[0].width)}`+
-					`:h=${valueOrDefault(fref.video[0].height, this._ref.video[0].height)}`+
-					":flags=bicubic+full_chroma_inp+full_chroma_int"+
-					":force_original_aspect_ratio=0"
-				);
 			}
 
 			filters.push(`[0:v:0]${chain.join(",")}[ref]`);
@@ -365,7 +372,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 
 			const proc = this.FFmpeg([
 				"-hide_banner",
-				"-v", "info",
+				"-v", "quiet",
 				"-stats",
 				"-hwaccel", "auto",
 
@@ -420,6 +427,35 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 					});
 				});
 			});
+		}
+
+		if (PATH.extname(log) === ".json") {
+			// Post-process the JSON file so we get more useful metrics.
+			const data = JSON.parse(FS.readFileSync(log).toString("utf-8"));
+
+			const prc = [50, 75, 90, 99, 99.9];
+
+			const frames : any = {};
+			for (const metric in data.pooled_metrics) {
+				frames[metric] = [];
+			}
+
+			for (const frame of data.frames) {
+				for (const metric in frame.metrics) {
+					frames[metric].push(frame.metrics[metric]);
+				}
+			}
+
+			for (const metric in data.pooled_metrics) {
+				for (const p in prc) {
+					data.pooled_metrics[metric][`${prc[p]}th %ile`] = PERCENTILE(
+						100 - prc[p],
+						frames[metric]
+					);
+				}
+			}
+
+			FS.writeFileSync(log, JSON.stringify(data, undefined, "\t"));
 		}
 	}
 
