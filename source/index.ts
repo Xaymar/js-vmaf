@@ -253,8 +253,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 			chain.push("setpts=PTS-STARTPTS");
 
 			// Convert to the correct framerate.
-			if (this._args.fps || (this._ref.video[0].r_framerate !== fref.video[0].r_framerate)) {
-				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_framerate)}`);
+			if (this._args.fps || (this._ref.video[0].r_frame_rate !== fref.video[0].r_frame_rate)) {
+				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_frame_rate)}`);
 			}
 
 			// Convert color.
@@ -310,8 +310,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 			chain.push("setpts=PTS-STARTPTS");
 
 			// Convert to the correct framerate.
-			if (this._args.fps || (cmp.video[0].r_framerate !== fref.video[0].r_framerate)) {
-				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_framerate)}`);
+			if (this._args.fps || (cmp.video[0].r_frame_rate !== fref.video[0].r_frame_rate)) {
+				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_frame_rate)}`);
 			}
 
 			// Convert format and color.
@@ -380,16 +380,19 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				"-hide_banner",
 				"-v", "quiet",
 				"-stats",
-				"-hwaccel", "auto",
 
 				"-threads", this._args.threads,
 				"-strict", "strict",
+				"-hwaccel", "auto",
 				"-hwaccel_flags", "+allow_high_depth",
+				"-r", this._ref.video[0].r_frame_rate,
 				"-i", this._args.reference,
 
 				"-threads", this._args.threads,
 				"-strict", "strict",
+				"-hwaccel", "auto",
 				"-hwaccel_flags", "+allow_high_depth",
+				"-r", cmp.video[0].r_frame_rate,
 				"-i", path,
 
 				"-sws_flags", "bicubic+full_chroma_inp+full_chroma_int",
@@ -401,7 +404,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 
 				"-f", "null", OS.platform() === "win32" ? "NUL" : "/dev/null"
 			]);
-			await new Promise((resolve, reject) => {
+			const result : any = await new Promise((resolve, reject) => {
 				const sout : Array<string> = [];
 				const serr : Array<string> = [];
 				proc.addListener("exit", (code) => {
@@ -433,6 +436,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 					});
 				});
 			});
+			if (result.code !== 0) {
+				throw new Error("Unexpected failure running FFmpeg");
+			}
 		}
 
 		if (PATH.extname(log) === ".json") {
