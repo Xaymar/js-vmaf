@@ -246,15 +246,35 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 		log = log.replaceAll("${ext}", PATH.extname(path));
 
 		const filters = [];
+
 		{ // Adjust reference to the expected format.
 			const chain = [];
 
 			// Fix up initial Presentation Timestamp so it starts at 0.
 			chain.push("setpts=PTS-STARTPTS");
 
+			// libplacebo: Framerate, Format, Color, Scale.
+			const placebo = [];
+
 			// Convert to the correct framerate.
 			if (this._args.fps || (this._ref.video[0].r_frame_rate !== fref.video[0].r_frame_rate)) {
-				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_frame_rate)}`);
+				placebo.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_frame_rate)}`);
+			}
+
+			// Scale to the correct size.
+			if ((this._ref.video[0].width !== fref.video[0].width) || (this._ref.video[0].height !== fref.video[0].height)) {
+				placebo.push(`w=${valueOrDefault(this._args.width, this._ref.video[0].width)}`);
+				placebo.push(`h=${valueOrDefault(this._args.height, this._ref.video[0].height)}`);
+				placebo.push("force_original_aspect_ratio=true");
+			} else if (this._args.width || this._args.height) {
+				placebo.push(`w=${valueOrDefault(this._args.width, -1)}`);
+				placebo.push(`h=${valueOrDefault(this._args.height, -1)}`);
+				placebo.push("force_original_aspect_ratio=true");
+			}
+
+			// Convert format.
+			if (this._args.format || (this._ref.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
+				placebo.push(`format=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
 			}
 
 			// Convert color.
@@ -266,39 +286,15 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				|| (this._ref.video[0].color_primaries !== fref.video[0].color_primaries)
 				|| (this._ref.video[0].color_transfer !== fref.video[0].color_transfer)
 				|| (this._ref.video[0].color_range !== fref.video[0].color_range)) {
-				chain.push("colorspace=dither=fsb" +
-					`:ispace=${valueOrDefault(this._ref.video[0].color_space, "bt709")}` +
-					`:iprimaries=${valueOrDefault(this._ref.video[0].color_primaries, "bt709")}` +
-					`:itrc=${valueOrDefault(this._ref.video[0].color_transfer, "bt709")}` +
-					`:irange=${valueOrDefault(this._ref.video[0].color_range, "tv")}` +
-					`:space=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "bt709"))}` +
-					`:primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "bt709"))}` +
-					`:trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "bt709"))}` +
-					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}`);
+				placebo.push(`colorspace=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "auto"))}`);
+				placebo.push(`range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "auto"))}`);
+				placebo.push(`color_primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "auto"))}`);
+				placebo.push(`color_trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "auto"))}`);
 			}
 
-			// Scale
-			if (this._args.width
-				|| this._args.height) {
-				chain.push(
-					`scale=w=${valueOrDefault(this._args.width, -1)}`+
-					`:h=${valueOrDefault(this._args.height, -1)}`+
-					":flags=bicubic+full_chroma_inp+full_chroma_int"+
-					":force_original_aspect_ratio=0"
-				);
-			} else if ((this._ref.video[0].width !== fref.video[0].width)
-				|| (this._ref.video[0].height !== fref.video[0].height)) {
-				chain.push(
-					`scale=w=${valueOrDefault(fref.video[0].width, this._ref.video[0].width)}`+
-					`:h=${valueOrDefault(fref.video[0].height, this._ref.video[0].height)}`+
-					":flags=bicubic+full_chroma_inp+full_chroma_int"+
-					":force_original_aspect_ratio=0"
-				);
-			}
-
-			// Convert format.
-			if (this._args.format || (this._ref.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
-				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
+			if (placebo.length > 0) {
+				placebo.push("dithering=white");
+				chain.push(`libplacebo=${placebo.join(":")}`);
 			}
 
 			filters.push(`[0:v:0]${chain.join(",")}[ref]`);
@@ -309,9 +305,23 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 			// Fix up initial Presentation Timestamp so it starts at 0.
 			chain.push("setpts=PTS-STARTPTS");
 
+			// libplacebo: Framerate, Format, Color, Scale.
+			const placebo = [];
+
 			// Convert to the correct framerate.
 			if (this._args.fps || (cmp.video[0].r_frame_rate !== fref.video[0].r_frame_rate)) {
-				chain.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_frame_rate)}`);
+				placebo.push(`fps=${valueOrDefault(this._args.fps, fref.video[0].r_frame_rate)}`);
+			}
+
+			// Scale
+			if ((cmp.video[0].width !== fref.video[0].width) || (cmp.video[0].height !== fref.video[0].height)) {
+				placebo.push(`w=${valueOrDefault(fref.video[0].width, cmp.video[0].width)}`);
+				placebo.push(`h=${valueOrDefault(fref.video[0].height, cmp.video[0].height)}`);
+				placebo.push("force_original_aspect_ratio=true");
+			} else if (this._args.width || this._args.height) {
+				placebo.push(`w=${valueOrDefault(this._args.width, -1)}`);
+				placebo.push(`h=${valueOrDefault(this._args.height, -1)}`);
+				placebo.push("force_original_aspect_ratio=true");
 			}
 
 			// Convert format and color.
@@ -323,39 +333,20 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				|| (cmp.video[0].color_primaries !== fref.video[0].color_primaries)
 				|| (cmp.video[0].color_transfer !== fref.video[0].color_transfer)
 				|| (cmp.video[0].color_range !== fref.video[0].color_range)) {
-				chain.push("colorspace=dither=fsb" +
-					`:ispace=${valueOrDefault(cmp.video[0].color_space, "bt709")}` +
-					`:iprimaries=${valueOrDefault(cmp.video[0].color_primaries, "bt709")}` +
-					`:itrc=${valueOrDefault(cmp.video[0].color_transfer, "bt709")}` +
-					`:irange=${valueOrDefault(cmp.video[0].color_range, "tv")}` +
-					`:space=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "bt709"))}` +
-					`:primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "bt709"))}` +
-					`:trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "bt709"))}` +
-					`:range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "tv"))}`);
-			}
-
-			// Scale
-			if (this._args.width
-				|| this._args.height) {
-				chain.push(
-					`scale=w=${valueOrDefault(this._args.width, -1)}`+
-					`:h=${valueOrDefault(this._args.height, -1)}`+
-					":flags=bicubic+full_chroma_inp+full_chroma_int"+
-					":force_original_aspect_ratio=0"
-				);
-			} else if ((cmp.video[0].width !== fref.video[0].width)
-				|| (cmp.video[0].height !== fref.video[0].height)) {
-				chain.push(
-					`scale=w=${valueOrDefault(fref.video[0].width, cmp.video[0].width)}`+
-					`:h=${valueOrDefault(fref.video[0].height, cmp.video[0].height)}`+
-					":flags=bicubic+full_chroma_inp+full_chroma_int"+
-					":force_original_aspect_ratio=0"
-				);
+				placebo.push(`colorspace=${valueOrDefault(this._args.color_space, valueOrDefault(fref.video[0].color_space, "auto"))}`);
+				placebo.push(`range=${valueOrDefault(this._args.color_range, valueOrDefault(fref.video[0].color_range, "auto"))}`);
+				placebo.push(`color_primaries=${valueOrDefault(this._args.color_primaries, valueOrDefault(fref.video[0].color_primaries, "auto"))}`);
+				placebo.push(`color_trc=${valueOrDefault(this._args.color_trc, valueOrDefault(fref.video[0].color_transfer, "auto"))}`);
 			}
 
 			// Convert format.
 			if (this._args.format || (cmp.video[0].pix_fmt !== fref.video[0].pix_fmt)) {
-				chain.push(`format=pix_fmts=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
+				placebo.push(`format=${valueOrDefault(this._args.format, valueOrDefault(fref.video[0].pix_fmt, "yuv420p"))}`);
+			}
+
+			if (placebo.length > 0) {
+				placebo.push("dithering=white");
+				chain.push(`libplacebo=${placebo.join(":")}`);
 			}
 
 			filters.push(`[1:v:0]${chain.join(",")}[dst]`);
@@ -374,6 +365,8 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AN
 				chain.push(`feature=${this._args.feature.join("|").replace(/([\\"'`:]{1,1})/g, "\\\\$1")}`);
 			}
 			chain.push(`n_threads=${this._args.threads}`);
+			chain.push("shortest=true");
+			chain.push("eof_action=endall");
 			filters.push(`[dst][ref]libvmaf=${chain.join(":")}`);
 
 			const proc = this.FFmpeg([
