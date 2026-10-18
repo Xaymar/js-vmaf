@@ -15,8 +15,8 @@
   "devDependencies": {
     "@types/argparse": "^2.0.10",
     "@types/node": "^18.11.17",
-    "@typescript-eslint/eslint-plugin": "^5.47.0",
-    "@typescript-eslint/parser": "^5.47.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
+    "@typescript-eslint/parser": "^8.71.2",
     "eslint": "^8.30.0",
     "typescript": "^4.9.4"
   },
